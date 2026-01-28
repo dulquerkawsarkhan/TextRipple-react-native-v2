@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "748790532334",
+    "project_id": "textripple-535bd",
+    "storage_bucket": "textripple-535bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:748790532334:android:2f9d664a1ce970b7dfcbff",
+        "android_client_info": {
+          "package_name": "com.digisoftbd.TextRipple"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "748790532334-3cpe3t4si38529g7o4t10rv1r6omgnkb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.digisoftbd.TextRipple",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "748790532334-co0p8jja2ogugebmp2iqoqnr7b1vrbbe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.digisoftbd.TextRipple",
+            "certificate_hash": "4383057da26ff728a5c9a5b5f0a8cd5ed33553b8"
+          }
+        },
+        {
+          "client_id": "748790532334-uo365p7bi7f6nt1e04svbg71ulq4h5up.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsHEytiL32DYguOOFeFhVfkzIdr_BvJIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "748790532334-uo365p7bi7f6nt1e04svbg71ulq4h5up.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
