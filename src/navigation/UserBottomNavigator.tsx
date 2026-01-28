@@ -2,7 +2,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS, icons } from '../constants';
 import ByCoinsScreen from '../screens/ByCoinsScreen';
@@ -42,40 +42,38 @@ export default function AnimTab1() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarBackground: () => {
-          return (
-            <View style={{ flex: 1 }}>
-              <LinearGradient
-                style={{
-
-                  width: '100%',
-                  height: 60,
-                  borderRadius: 16,
-                  overflow: 'hidden',
-
-                }}
-                locations={[0.2, 1]}
-                colors={[COLORS.lightRed, COLORS.lightBlue]}
-                useAngle={true}
-                angle={190} />
-
-
-
-            </View>
-          );
-        },
+        tabBarBackground: () => (
+          <View style={StyleSheet.absoluteFill}>
+            <LinearGradient
+              style={{
+                flex: 1,
+                borderRadius: 16,
+              }}
+              locations={[0, 1]}
+              colors={[COLORS.lightRed, COLORS.lightBlue]}
+              useAngle={true}
+              angle={190}
+            />
+          </View>
+        ),
         tabBarStyle: {
-          height: 55,
+          height: 60,
           position: 'absolute',
           bottom: 20,
-          right: 16,
-          left: 16,
+          marginHorizontal: '5%',
+          width: '90%',
           borderRadius: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingBottom: 0,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 5,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
         },
-
       }}>
       {TabArr &&
         TabArr.map((item, index) => {

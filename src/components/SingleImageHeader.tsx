@@ -1,4 +1,4 @@
-/* eslint-disable react/react-in-jsx-scope */
+
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View } from 'react-native';
 import { COLORS, SIZES } from '../constants';

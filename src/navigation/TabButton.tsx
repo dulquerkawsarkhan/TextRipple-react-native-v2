@@ -1,27 +1,34 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Image, StyleSheet, TouchableOpacity } from 'react-native';
-import * as Animatable from 'react-native-animatable';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { COLORS, SIZES } from '../constants';
 
 const TabButton = (props: any) => {
   const { item, onPress, accessibilityState } = props;
-  const focused = accessibilityState.selected;
-  const viewRef = useRef<any>(null);
+  const focused = accessibilityState?.selected ?? false;
+
+  const scale = useSharedValue(1);
+  const rotation = useSharedValue(0);
 
   useEffect(() => {
     if (focused) {
-      viewRef.current.animate({
-        0: { scale: 0.9, rotate: '0deg' },
-        1: { scale: 1.2, rotate: '360deg' },
-      });
+      scale.value = withSpring(1.2, { damping: 10, stiffness: 100 });
+      rotation.value = withSpring(360, { damping: 10, stiffness: 100 });
     } else {
-      viewRef.current.animate({
-        0: { scale: 1.2, rotate: '360deg' },
-        1: { scale: 1, rotate: '0deg' },
-      });
+      scale.value = withSpring(1, { damping: 10, stiffness: 100 });
+      rotation.value = withSpring(0, { damping: 10, stiffness: 100 });
     }
-  }, [focused]);
+  }, [focused, scale, rotation]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: scale.value },
+        { rotate: `${rotation.value}deg` },
+      ],
+    };
+  });
 
   return (
     <TouchableOpacity
@@ -30,39 +37,28 @@ const TabButton = (props: any) => {
       }}
       activeOpacity={1}
       style={styles.container}>
-      <Animatable.View
-        ref={viewRef}
-        duration={1200}
-        style={[styles.container, {
-          elevation: 1,
-        }]}
+      <Animated.View
+        style={[styles.container, animatedStyle]}
       >
         <Image
           source={focused ? item.activeIcon : item.inActiveIcon}
           style={{
             width: SIZES.responsiveScreenWidth(5.6),
             height: SIZES.responsiveScreenWidth(5.6),
-
-            // borderRadius: 10,
             tintColor: focused ? COLORS.primary : COLORS.gray,
           }}
         />
-      </Animatable.View>
+      </Animated.View>
     </TouchableOpacity>
   );
 };
-
-
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor:COLORS.transparent
   },
 });
-
 
 export default TabButton;

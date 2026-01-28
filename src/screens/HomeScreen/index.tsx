@@ -1,8 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 
-import {
-    withCollapsibleContext,
-} from '@r0b0t3d/react-native-collapsible';
+// import {
+//     withCollapsibleContext,
+// } from '@r0b0t3d/react-native-collapsible';
 import Clipboard from '@react-native-clipboard/clipboard';
 import React, { useState } from 'react';
 import { Alert, FlatList, Share, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -451,4 +451,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default withCollapsibleContext(Home);
+export default Home;

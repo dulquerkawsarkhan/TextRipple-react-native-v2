@@ -1,4 +1,4 @@
-package com.piloops
+package com.digisoftbd.TextRipple
 
 import android.app.Application
 import com.facebook.react.PackageList
