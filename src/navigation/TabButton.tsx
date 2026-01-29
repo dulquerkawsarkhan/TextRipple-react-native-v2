@@ -1,7 +1,7 @@
 import { useNavigationState } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
-import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { COLORS, SIZES } from '../constants';
 
 const TabButton = (props: any) => {
@@ -14,27 +14,29 @@ const TabButton = (props: any) => {
   const progress = useSharedValue(0);
   useEffect(() => {
     if (focused) {
-      progress.value = withTiming(1, { duration: 500 });
+      progress.value = withSpring(1, { damping: 12, stiffness: 100 });
     } else {
       progress.value = withTiming(0, { duration: 200 });
     }
   }, [focused, progress]);
 
   const animatedIconStyle = useAnimatedStyle(() => {
-    const scale = interpolate(progress.value, [0, 1], [1, 1.2]);
+    const scale = interpolate(progress.value, [0, 1], [1, 1.3]);
     const rotate = interpolate(progress.value, [0, 1], [0, 360]);
+    const translateY = interpolate(progress.value, [0, 0.5, 1], [0, -10, 0]);
 
     return {
       transform: [
         { scale },
         { rotate: `${rotate}deg` },
+        { translateY },
       ],
     };
   });
 
   const animatedBubbleStyle = useAnimatedStyle(() => {
-    const scale = interpolate(progress.value, [0, 1], [0, 1]);
-    const opacity = interpolate(progress.value, [0, 1], [0, 1]);
+    const scale = interpolate(progress.value, [0, 1], [0, 1.5]);
+    const opacity = interpolate(progress.value, [0, 1], [0, 0.2]);
 
     return {
       transform: [{ scale }],
