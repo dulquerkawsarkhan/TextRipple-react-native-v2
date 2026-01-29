@@ -51,14 +51,15 @@ class IAPServiceClass {
 
     async init() {
         try {
-
-            await RNIap.initConnection();
-
+            console.log('IAP: Initializing connection...');
+            const result = await RNIap.initConnection();
+            console.log('IAP: Connection initialized', result);
 
             if (itemSkus && itemSkus.length > 0) {
-
+                console.log('IAP: Fetching products for SKUs:', itemSkus);
                 // @ts-ignore
                 this.products = await RNIap.getProducts({ skus: itemSkus });
+                console.log('IAP: Products fetched:', this.products.length);
             } else {
                 console.warn('IAP Init: No SKUs defined for this platform');
             }
@@ -70,8 +71,10 @@ class IAPServiceClass {
     async getProducts(): Promise<RNIap.Product[]> {
         if (this.products.length === 0 && itemSkus) {
              try {
+                console.log('IAP: Retrying fetch products...');
                 // @ts-ignore
                 this.products = await RNIap.getProducts({ skus: itemSkus });
+                console.log('IAP: Products fetched (retry):', this.products.length);
             } catch (err) {
                 console.warn('IAP Get Products Error:', err);
                 return [];
@@ -85,13 +88,10 @@ class IAPServiceClass {
 
     async requestPurchase(sku: string) {
         try {
-            if (Platform.OS === 'android') {
-                // @ts-ignore
-                await RNIap.requestPurchase({ skus: [sku] });
-            } else {
-                // @ts-ignore
-                await RNIap.requestPurchase({ sku });
-            }
+            console.log('IAP: Requesting purchase for SKU:', sku);
+            // Unified API for v12+
+            // @ts-ignore
+            await RNIap.requestPurchase({ sku });
         } catch (err: any) {
             if (__DEV__ && (err.message.includes('sku was not found') || err.message.includes('Billing is unavailable'))) {
                 console.log('DEV MODE: Simulating purchase for', sku);

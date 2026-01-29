@@ -46,6 +46,7 @@ const ByCoinsScreen = () => {
                 await IAPService.init();
                 const products = await IAPService.getProducts();
 
+
                 if (products.length === 0) {
                     Alert.alert('IAP Debug', 'No products details fetched from Store. Please check if SKUs match Google Play Console and App is Signed correctly.');
                 }
