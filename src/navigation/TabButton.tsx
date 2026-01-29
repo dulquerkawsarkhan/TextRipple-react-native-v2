@@ -1,54 +1,67 @@
-/* eslint-disable react-native/no-inline-styles */
+import { useNavigationState } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { COLORS, SIZES } from '../constants';
 
 const TabButton = (props: any) => {
-  const { item, onPress, accessibilityState } = props;
-  const focused = accessibilityState?.selected ?? false;
+  const { item, onPress } = props;
 
-  const scale = useSharedValue(1);
-  const rotation = useSharedValue(0);
+  // Use navigation state to determine focus if props don't provide it reliably
+  const currentRouteName = useNavigationState(state => state?.routes[state.index]?.name);
+  const focused = currentRouteName === item.route;
 
+  const progress = useSharedValue(0);
   useEffect(() => {
     if (focused) {
-      scale.value = withSpring(1.2, { damping: 10, stiffness: 100 });
-      rotation.value = withSpring(360, { damping: 10, stiffness: 100 });
+      progress.value = withTiming(1, { duration: 500 });
     } else {
-      scale.value = withSpring(1, { damping: 10, stiffness: 100 });
-      rotation.value = withSpring(0, { damping: 10, stiffness: 100 });
+      progress.value = withTiming(0, { duration: 200 });
     }
-  }, [focused, scale, rotation]);
+  }, [focused, progress]);
 
-  const animatedStyle = useAnimatedStyle(() => {
+  const animatedIconStyle = useAnimatedStyle(() => {
+    const scale = interpolate(progress.value, [0, 1], [1, 1.2]);
+    const rotate = interpolate(progress.value, [0, 1], [0, 360]);
+
     return {
       transform: [
-        { scale: scale.value },
-        { rotate: `${rotation.value}deg` },
+        { scale },
+        { rotate: `${rotate}deg` },
       ],
+    };
+  });
+
+  const animatedBubbleStyle = useAnimatedStyle(() => {
+    const scale = interpolate(progress.value, [0, 1], [0, 1]);
+    const opacity = interpolate(progress.value, [0, 1], [0, 1]);
+
+    return {
+      transform: [{ scale }],
+      opacity,
     };
   });
 
   return (
     <TouchableOpacity
-      onPress={() => {
-        onPress();
-      }}
+      onPress={onPress}
       activeOpacity={1}
       style={styles.container}>
-      <Animated.View
-        style={[styles.container, animatedStyle]}
-      >
-        <Image
-          source={focused ? item.activeIcon : item.inActiveIcon}
-          style={{
-            width: SIZES.responsiveScreenWidth(5.6),
-            height: SIZES.responsiveScreenWidth(5.6),
-            tintColor: focused ? COLORS.primary : COLORS.gray,
-          }}
+      <View style={styles.btnContainer}>
+        <Animated.View
+          style={[styles.bubble, animatedBubbleStyle]}
         />
-      </Animated.View>
+        <Animated.View style={animatedIconStyle}>
+          <Image
+            source={focused ? item.activeIcon : item.inActiveIcon}
+            style={{
+              width: SIZES.responsiveScreenWidth(6),
+              height: SIZES.responsiveScreenWidth(6),
+              tintColor: focused ? COLORS.primary : COLORS.gray,
+            }}
+          />
+        </Animated.View>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -58,6 +71,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  btnContainer: {
+    marginTop: SIZES.responsiveScreenHeight(1.5),
+    width: SIZES.responsiveScreenWidth(9),
+    height: SIZES.responsiveScreenWidth(9),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bubble: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
   },
 });
 

@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { applyMiddleware, createStore } from 'redux';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -105,9 +106,11 @@ const AppContent = () => {
 const App = () => {
   return (
     <Provider store={store}>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </GestureHandlerRootView>
     </Provider>
   );
 };

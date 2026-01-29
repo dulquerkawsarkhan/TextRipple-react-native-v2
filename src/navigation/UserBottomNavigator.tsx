@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { COLORS, icons } from '../constants';
+import { COLORS, icons, SIZES } from '../constants';
 import ByCoinsScreen from '../screens/ByCoinsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
@@ -48,6 +48,7 @@ export default function AnimTab1() {
               style={{
                 flex: 1,
                 borderRadius: 16,
+
               }}
               locations={[0, 1]}
               colors={[COLORS.lightRed, COLORS.lightBlue]}
@@ -57,9 +58,10 @@ export default function AnimTab1() {
           </View>
         ),
         tabBarStyle: {
-          height: 60,
+          height: SIZES.responsiveScreenWidth(12),
           position: 'absolute',
           bottom: 20,
+
           marginHorizontal: '5%',
           width: '90%',
           borderRadius: 16,
@@ -77,6 +79,7 @@ export default function AnimTab1() {
       }}>
       {TabArr &&
         TabArr.map((item, index) => {
+
           return (
             <Tab.Screen
               key={index}
