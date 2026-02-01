@@ -52,17 +52,22 @@ const ByCoinsScreen = () => {
                 await IAPService.init();
                 const fetchedProducts = await IAPService.getProducts();
 
-                console.log(fetchedProducts, "fetchedProducts")
+                console.log('IAP: Fetched products raw:', JSON.stringify(fetchedProducts, null, 2));
 
                 if (fetchedProducts && fetchedProducts.length > 0) {
                     console.log('IAP: Fetched products from store, updating UI');
                     // Merge fetched product info (price, currency) with local configuration (coins amount)
                     const updatedData = coinsSet.map(localItem => {
-                        const storeItem = fetchedProducts.find(p => (p as any).productId === localItem.sku);
+                        const storeItem = fetchedProducts.find(p => p.id === localItem.sku);
+
+                        if (!storeItem) {
+                            console.log(`IAP Match Fail: Local SKU '${localItem.sku}' not found in store products.`);
+                        }
+
                         if (storeItem) {
                             return {
                                 ...localItem,
-                                price: (storeItem as any).localizedPrice || storeItem.price, // Use localized price string if available
+                                price: storeItem.displayPrice || storeItem.price, // Use localized displayPrice if available, else raw price
                                 currency: storeItem.currency,
                                 title: storeItem.title,
                                 description: storeItem.description
@@ -70,6 +75,8 @@ const ByCoinsScreen = () => {
                         }
                         return null; // Start by returning null for unmatched items
                     }).filter(item => item !== null); // Only keep items that exist in Store
+
+                    console.log('IAP: Matched products count:', updatedData.length);
 
                     if (updatedData.length > 0) {
                         setProductsData(updatedData);
@@ -79,7 +86,6 @@ const ByCoinsScreen = () => {
                         setFetchError('Products available in Store do not match App configuration.');
                     }
                 } else {
-                    console.log('IAP Debug: No products details fetched from Store.');
                     console.log('IAP Debug: No products details fetched from Store.');
                     setFetchError(`DEBUG MODE: Google returned 0 products.\n\nPossible Causes:\n1. App signature mismtach\n2. User not a tester\n3. Play Store cache needs clearing\n\nRequested SKUs:\n${(coinsSet.map(c => c.sku)).join(', ')}`);
                 }
@@ -106,7 +112,7 @@ const ByCoinsScreen = () => {
         return () => {
             // Cleanup if needed
             IAPService.endPurchaseListener();
-            IAPService.endConnection();
+            // IAPService.endConnection(); // Keep connection alive for better performance and stability
         };
     }, [userId]);
 
@@ -126,6 +132,17 @@ const ByCoinsScreen = () => {
             setLoading(false);
         }
     };
+
+
+
+
+
+
+
+
+
+
+
 
     return (
         <>

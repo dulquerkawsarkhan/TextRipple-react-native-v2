@@ -1,5 +1,16 @@
 import { Platform } from 'react-native';
-import * as RNIap from 'react-native-iap';
+import {
+    endConnection,
+    fetchProducts,
+    finishTransaction,
+    initConnection, // Changed from getProducts
+    Product,
+    Purchase,
+    PurchaseError,
+    purchaseErrorListener,
+    purchaseUpdatedListener,
+    requestPurchase,
+} from 'react-native-iap';
 import { AuthService } from './AuthService';
 
 const itemSkus = Platform.select({
@@ -47,7 +58,7 @@ export interface CoinProduct {
 }
 
 class IAPServiceClass {
-    products: RNIap.Product[] = [];
+    products: Product[] = [];
     purchaseUpdateSubscription: any = null;
     purchaseErrorSubscription: any = null;
     connectionInitialized: boolean = false;
@@ -60,7 +71,7 @@ class IAPServiceClass {
             }
 
             console.log('IAP: Initializing connection...');
-            const result = await RNIap.initConnection();
+            const result = await initConnection();
             this.connectionInitialized = result;
             console.log('IAP: Connection initialized', result);
 
@@ -71,7 +82,7 @@ class IAPServiceClass {
             if (itemSkus && itemSkus.length > 0) {
                 console.log('IAP: Fetching products for SKUs:', itemSkus);
                 // @ts-ignore
-                this.products = await RNIap.getProducts({ skus: itemSkus });
+                this.products = await fetchProducts({ skus: itemSkus });
                 console.log('IAP: Products fetched:', this.products.length);
             } else {
                 console.warn('IAP Init: No SKUs defined for this platform');
@@ -82,18 +93,22 @@ class IAPServiceClass {
         }
     }
 
-    async getProducts(): Promise<RNIap.Product[]> {
+    async getProducts(): Promise<Product[]> {
         if (itemSkus) {
              try {
                 // Always try to fetch if empty, or refresh
                 if (this.products.length === 0) {
                      console.log('IAP: Retrying fetch products...');
                     // @ts-ignore
-                    this.products = await RNIap.getProducts({ skus: itemSkus });
+                    this.products = await fetchProducts({ skus: itemSkus });
                     console.log('IAP: Products fetched (retry):', this.products.length);
+                
+                    console.log('IAP: Products fetched:', this.products);
+                    console.log('IAP: -------------:', this.products);
                 }
             } catch (err) {
                 console.warn('IAP Get Products Error:', err);
+                console.log('IAP--- Get Products Error:', err);
                 return [];
             }
         }
@@ -111,7 +126,7 @@ class IAPServiceClass {
             console.log('IAP: Requesting purchase for SKU:', sku);
             
             // Check if product exists in fetched products
-            const productExists = this.products.some(p => (p as any).productId === sku);
+            const productExists = this.products.some(p => p.id === sku);
 
             if (!productExists) {
                 console.warn('IAP: Product not found in fetched products. Skipping store request.');
@@ -122,7 +137,7 @@ class IAPServiceClass {
 
             // Unified API for v12+
             // @ts-ignore
-            await RNIap.requestPurchase({ sku });
+            await requestPurchase({ sku });
         } catch (err: any) {
             // Enhanced error handling for Dev Mode simulation
             const isDevModeError = __DEV__ || (err.message && (err.message.includes('sku was not found') || err.message.includes('Billing is unavailable') || err.message.includes('Missing purchase request configuration')));
@@ -158,12 +173,12 @@ class IAPServiceClass {
              this.purchaseUpdateSubscription.remove();
         }
 
-        this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase: RNIap.Purchase) => {
+        this.purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase: Purchase) => {
 
 
             try {
                 // Acknowledge the purchase thoroughly
-                await RNIap.finishTransaction({ purchase, isConsumable: true });
+                await finishTransaction({ purchase, isConsumable: true });
 
                 // Parse coins from SKU
                  let coins = parseInt(purchase.productId.replace('coins_', '').replace('_v2', ''), 10);
@@ -194,7 +209,7 @@ class IAPServiceClass {
              this.purchaseErrorSubscription.remove();
         }
 
-        this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error: RNIap.PurchaseError) => {
+        this.purchaseErrorSubscription = purchaseErrorListener((error: PurchaseError) => {
             console.warn('IAP Purchase Error Listener:', error);
             // Don't alert here, just log. UI handling should be in request path if possible.
         });
@@ -214,7 +229,7 @@ class IAPServiceClass {
     async endConnection() {
         try {
              if (this.connectionInitialized) {
-                 await RNIap.endConnection();
+                 await endConnection();
                  this.connectionInitialized = false;
              }
         } catch(err) {
