@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { ErrorCode } from 'react-native-iap';
 import LinearGradient from 'react-native-linear-gradient';
 import SingleImageHeaderWithoutBack from '../../components/SingleImageHeaderWithoutBack';
 import Wrapper from '../../components/Wrapper';
@@ -48,7 +49,7 @@ const ByCoinsScreen = () => {
         const initIAP = async () => {
             try {
                 // Initializing IAP
-                // setLoading(true); // Optional: Blocking or non-blocking loading
+                setLoading(true); // Optional: Blocking or non-blocking loading
                 await IAPService.init();
                 const fetchedProducts = await IAPService.getProducts();
 
@@ -99,10 +100,22 @@ const ByCoinsScreen = () => {
 
         const setupListener = () => {
             if (userId) {
-                IAPService.startPurchaseListener(userId, (sku) => {
-                    console.log('Purchase successful for SKU:', sku);
-                    Alert.alert('Success', 'Coins added to your wallet!');
-                });
+                IAPService.startPurchaseListener(
+                    userId,
+                    async (sku) => {
+                        console.log('Purchase successful for SKU:', sku);
+                        await AuthService.getUserData(userId); // Refresh user data to get new coin balance
+                        setLoading(false);
+                        Alert.alert('Success', 'Coins added to your wallet!');
+                    },
+                    (error) => {
+                        console.log('Purchase Failed/Cancelled:', error);
+                        setLoading(false);
+                        if (error.code !== ErrorCode.UserCancelled) {
+                            Alert.alert('Purchase Failed', error.message || 'Something went wrong');
+                        }
+                    }
+                );
             }
         };
 
@@ -119,17 +132,16 @@ const ByCoinsScreen = () => {
     const handleBuyCoin = async (item: any) => {
         try {
             if (userId) {
-                setLoading(true);
+                setLoading(true); // Start loading, will be cleared by listener
                 const sku = item.sku;
                 await IAPService.requestPurchase(sku);
+                // Do NOT await getUserData here, the listener handles success and data refresh
 
-                await AuthService.getUserData(userId);
             }
         } catch (error: any) {
             console.log('Purchase Request Error:', error);
-            // Alert.alert('Purchase Failed', error.message || 'Unknown error occurred');
-        } finally {
-            setLoading(false);
+            setLoading(false); // Only clear if request failed to start
+            Alert.alert('Purchase Request Failed', error.message || 'Unknown error occurred');
         }
     };
 

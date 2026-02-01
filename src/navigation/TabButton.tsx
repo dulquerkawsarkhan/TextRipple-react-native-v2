@@ -46,6 +46,7 @@ const TabButton = (props: any) => {
 
   return (
     <TouchableOpacity
+      {...props}
       onPress={onPress}
       activeOpacity={1}
       style={styles.container}>
@@ -57,8 +58,8 @@ const TabButton = (props: any) => {
           <Image
             source={focused ? item.activeIcon : item.inActiveIcon}
             style={{
-              width: SIZES.responsiveScreenWidth(6),
-              height: SIZES.responsiveScreenWidth(6),
+              width: SIZES.responsiveScreenHeight(3),
+              height: SIZES.responsiveScreenHeight(3),
               tintColor: focused ? COLORS.primary : COLORS.gray,
             }}
           />
@@ -70,14 +71,13 @@ const TabButton = (props: any) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    height: SIZES.responsiveScreenHeight(5),
     justifyContent: 'center',
     alignItems: 'center',
   },
   btnContainer: {
-    marginTop: SIZES.responsiveScreenHeight(1.5),
-    width: SIZES.responsiveScreenWidth(9),
-    height: SIZES.responsiveScreenWidth(9),
+    width: SIZES.responsiveScreenHeight(5),
+    height: SIZES.responsiveScreenHeight(5),
     justifyContent: 'center',
     alignItems: 'center',
   },

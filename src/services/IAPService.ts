@@ -194,9 +194,16 @@ class IAPServiceClass {
         }
     }
 
-    startPurchaseListener(userId: string, onPurchaseSuccess: (sku: string) => void) {
+    private onPurchaseError?: (error: PurchaseError) => void;
+
+    startPurchaseListener(
+        userId: string, 
+        onPurchaseSuccess: (sku: string) => void,
+        onPurchaseError?: (error: PurchaseError) => void
+    ) {
         this.userId = userId;
         this.onPurchaseSuccess = onPurchaseSuccess;
+        this.onPurchaseError = onPurchaseError;
 
         if (this.purchaseUpdateSubscription) {
              this.purchaseUpdateSubscription.remove();
@@ -240,7 +247,9 @@ class IAPServiceClass {
 
         this.purchaseErrorSubscription = purchaseErrorListener((error: PurchaseError) => {
             console.warn('IAP Purchase Error Listener:', error);
-            // Don't alert here, just log. UI handling should be in request path if possible.
+            if (this.onPurchaseError) {
+                this.onPurchaseError(error);
+            }
         });
     }
 

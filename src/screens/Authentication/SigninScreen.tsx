@@ -251,6 +251,9 @@ const SigninScreen = () => {
                             <ContinueWithOtherButton
                                 isUser={true}
 
+                                isLoading={isLoading}
+                                setLoading={setLoading}
+
                             />
 
                             <TouchableOpacity

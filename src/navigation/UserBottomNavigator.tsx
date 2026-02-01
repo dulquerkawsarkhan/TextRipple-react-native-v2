@@ -49,6 +49,8 @@ export default function AnimTab1() {
                 flex: 1,
                 borderRadius: 16,
 
+
+
               }}
               locations={[0, 1]}
               colors={[COLORS.lightRed, COLORS.lightBlue]}
@@ -58,9 +60,9 @@ export default function AnimTab1() {
           </View>
         ),
         tabBarStyle: {
-          height: SIZES.responsiveScreenWidth(15),
+          height: SIZES.responsiveScreenHeight(5.5),
           position: 'absolute',
-          bottom: 20,
+          bottom: SIZES.responsiveScreenHeight(2),
 
           marginHorizontal: '5%',
           width: '90%',

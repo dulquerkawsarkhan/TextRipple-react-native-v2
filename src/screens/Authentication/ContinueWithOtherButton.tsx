@@ -16,20 +16,27 @@ import { COLORS, SIZES, icons } from '../../constants';
 
 import { AuthService } from '../../services/AuthService';
 
-const ContinueWithOtherButton = ({ isUser }: any) => {
+const ContinueWithOtherButton = ({
+    isUser,
+    isLoading,
+    setLoading,
+}: any) => {
 
 
     const navigation = useNavigation<any>();
 
+    // const [isLoading, setLoading] = useState(false);
 
 
     // Somewhere in your code
     const handelSignInWithGoogle = async () => {
         try {
+            setLoading(true);
             await AuthService.signInWithGoogle();
             // Navigation is handled by App.tsx via AuthContext state change
+            setLoading(false);
         } catch (error) {
-
+            setLoading(false);
         }
     };
 

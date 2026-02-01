@@ -7,6 +7,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import React, { useState } from 'react';
 import { Alert, FlatList, Share, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { responsiveScreenHeight } from '../../components/ResponsiveDimensions';
 import Wrapper from '../../components/Wrapper';
 import { COLORS, SIZES } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
@@ -61,6 +62,11 @@ const Home = () => {
         setRepetitionsError('');
         if (!textValue) {
             setTextValueError('Please enter a valid text');
+            return;
+        }
+
+        if (repetitions > 10000) {
+            setRepetitionsError('Max defined 10,000 repetitions');
             return;
         }
 
@@ -170,9 +176,14 @@ const Home = () => {
                                     autocomplete="off"
                                     value={textValue}
                                     onChange={(value: any) => {
-
-                                        setTextValue(value);
+                                        if (value.length <= 200) {
+                                            setTextValue(value);
+                                        } else {
+                                            // Optional: Alert or just truncation
+                                            setTextValue(value.slice(0, 200));
+                                        }
                                     }}
+                                    maxLength={200}
                                     errorMsg={null}
                                     appendComponent={null}
                                 />
@@ -194,8 +205,23 @@ const Home = () => {
                                     autocomplete="off"
                                     value={repetitions ?? 0}
                                     onChange={(value: any) => {
+                                        // const numValue = Number(value);
+                                        const cleanValue = value.replace(/[^0-9]/g, '');
+                                        const numValue = Number(cleanValue);
 
-                                        setRepetitions(value);
+                                        if (value?.length <= 5) {
+                                            setRepetitionsError('');
+                                            if (numValue > 10000) {
+                                                setRepetitionsError('Max defined 10,000 repetitions');
+                                                setRepetitions(10000);
+                                            } else if (numValue <= 10000) {
+                                                // setRepetitionsError('Min defined 10,000 repetitions');
+                                                setRepetitions(value);
+                                            }
+
+                                        } else {
+                                            setRepetitionsError('Max defined 10,000 repetitions');
+                                        }
                                     }}
                                     errorMsg={null}
                                     appendComponent={null}
@@ -263,7 +289,7 @@ const Home = () => {
                     <LinearGradient
                         style={{
                             width: SIZES.responsiveScreenWidth(95),
-                            height: SIZES.responsiveScreenHeight(52),
+                            height: SIZES.responsiveScreenHeight(50),
                             marginTop: 10,
                             borderRadius: 5,
                             elevation: 2,
@@ -321,94 +347,100 @@ const Home = () => {
 
                     {/* ============================ */}
 
-                    <View style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginTop: 15,
-                    }}>
 
-                        <TouchableOpacity
+                </View>
+
+
+                <View style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: 15,
+                    position: 'absolute',
+                    bottom: responsiveScreenHeight(11),
+                    left: 0,
+                    right: 0,
+                }}>
+
+                    <TouchableOpacity
+                        style={{
+                            marginHorizontal: 10,
+                        }}
+                        onPress={handleCopy}
+                        activeOpacity={0.9}>
+
+                        <LinearGradient
                             style={{
-                                marginHorizontal: 10,
+                                backgroundColor: COLORS.lightGray2,
+                                borderRadius: 5,
+                                width: SIZES.responsiveScreenWidth(28),
+                                height: SIZES.responsiveScreenWidth(8.5),
+                                elevation: 1.5,
+                                justifyContent: 'center',
+                                alignItems: 'center',
                             }}
-                            onPress={handleCopy}
-                            activeOpacity={0.9}>
+                            locations={[0, 1]}
+                            colors={[COLORS.lightRed, COLORS.lightBlue]}
+                            useAngle={true}
+                            angle={90}>
+                            <Text style={styles.linearGradientButtonText}>
+                                Copy
+                            </Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
 
-                            <LinearGradient
-                                style={{
-                                    backgroundColor: COLORS.lightGray2,
-                                    borderRadius: 5,
-                                    width: SIZES.responsiveScreenWidth(29),
-                                    height: SIZES.responsiveScreenWidth(8.5),
-                                    elevation: 1.5,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                                locations={[0, 1]}
-                                colors={[COLORS.lightRed, COLORS.lightBlue]}
-                                useAngle={true}
-                                angle={90}>
-                                <Text style={styles.linearGradientButtonText}>
-                                    Copy
-                                </Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
+                    <TouchableOpacity
+                        style={{
+                            marginHorizontal: 10,
+                        }}
+                        onPress={handleShare}
+                        activeOpacity={0.9}>
+                        <LinearGradient
                             style={{
-                                marginHorizontal: 10,
+                                backgroundColor: COLORS.lightGray2,
+                                borderRadius: 5,
+                                width: SIZES.responsiveScreenWidth(28),
+                                height: SIZES.responsiveScreenWidth(8.5),
+                                elevation: 1.5,
+                                justifyContent: 'center',
+                                alignItems: 'center',
                             }}
-                            onPress={handleShare}
-                            activeOpacity={0.9}>
-                            <LinearGradient
-                                style={{
-                                    backgroundColor: COLORS.lightGray2,
-                                    borderRadius: 5,
-                                    width: SIZES.responsiveScreenWidth(29),
-                                    height: SIZES.responsiveScreenWidth(8.5),
-                                    elevation: 1.5,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                                locations={[0, 1]}
-                                colors={[COLORS.lightRed, COLORS.lightBlue]}
-                                useAngle={true}
-                                angle={90}>
-                                <Text style={styles.linearGradientButtonText}>
-                                    Share
-                                </Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
+                            locations={[0, 1]}
+                            colors={[COLORS.lightRed, COLORS.lightBlue]}
+                            useAngle={true}
+                            angle={90}>
+                            <Text style={styles.linearGradientButtonText}>
+                                Share
+                            </Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
 
-                        <TouchableOpacity
+                    <TouchableOpacity
+                        style={{
+                            marginHorizontal: 10,
+                        }}
+                        onPress={handleReset}
+                        activeOpacity={0.9}>
+                        <LinearGradient
                             style={{
-                                marginHorizontal: 10,
+                                backgroundColor: COLORS.lightGray2,
+                                borderRadius: 5,
+                                width: SIZES.responsiveScreenWidth(28),
+                                height: SIZES.responsiveScreenWidth(8.5),
+                                elevation: 1.5,
+                                justifyContent: 'center',
+                                alignItems: 'center',
                             }}
-                            onPress={handleReset}
-                            activeOpacity={0.9}>
-                            <LinearGradient
-                                style={{
-                                    backgroundColor: COLORS.lightGray2,
-                                    borderRadius: 5,
-                                    width: SIZES.responsiveScreenWidth(29),
-                                    height: SIZES.responsiveScreenWidth(8.5),
-                                    elevation: 1.5,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                                locations={[0, 1]}
-                                colors={[COLORS.lightRed, COLORS.lightBlue]}
-                                useAngle={true}
-                                angle={90}>
-                                <Text style={styles.linearGradientButtonText}>
-                                    Reset
-                                </Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-
+                            locations={[0, 1]}
+                            colors={[COLORS.lightRed, COLORS.lightBlue]}
+                            useAngle={true}
+                            angle={90}>
+                            <Text style={styles.linearGradientButtonText}>
+                                Reset
+                            </Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
                 </View>
 
             </Wrapper>

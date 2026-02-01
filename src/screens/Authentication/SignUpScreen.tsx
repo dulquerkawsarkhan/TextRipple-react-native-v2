@@ -230,7 +230,12 @@ const SignUpScreen = () => {
 
 
                             {/* ============ContinueWithOtherButton===================== */}
-                            <ContinueWithOtherButton />
+                            <ContinueWithOtherButton
+                                isUser={false}
+                                isLoading={isLoading}
+                                setLoading={setLoading}
+
+                            />
 
                             <TouchableOpacity
                                 onPress={() => {
