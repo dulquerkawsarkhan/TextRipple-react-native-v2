@@ -39,35 +39,72 @@ const ByCoinsScreen = () => {
     const [loading, setLoading] = useState(false);
 
 
+    // State to hold valid products (initially empty, no fallback)
+    const [productsData, setProductsData] = useState<any[]>([]);
+    // State to show error message if fetch fails or returns empty
+    const [fetchError, setFetchError] = useState<string | null>(null);
+
     useEffect(() => {
         const initIAP = async () => {
             try {
-                setLoading(true);
+                // Initializing IAP
+                // setLoading(true); // Optional: Blocking or non-blocking loading
                 await IAPService.init();
-                const products = await IAPService.getProducts();
+                const fetchedProducts = await IAPService.getProducts();
 
+                console.log(fetchedProducts, "fetchedProducts")
 
-                if (products.length === 0) {
-                    Alert.alert('IAP Debug', 'No products details fetched from Store. Please check if SKUs match Google Play Console and App is Signed correctly.');
+                if (fetchedProducts && fetchedProducts.length > 0) {
+                    console.log('IAP: Fetched products from store, updating UI');
+                    // Merge fetched product info (price, currency) with local configuration (coins amount)
+                    const updatedData = coinsSet.map(localItem => {
+                        const storeItem = fetchedProducts.find(p => (p as any).productId === localItem.sku);
+                        if (storeItem) {
+                            return {
+                                ...localItem,
+                                price: (storeItem as any).localizedPrice || storeItem.price, // Use localized price string if available
+                                currency: storeItem.currency,
+                                title: storeItem.title,
+                                description: storeItem.description
+                            };
+                        }
+                        return null; // Start by returning null for unmatched items
+                    }).filter(item => item !== null); // Only keep items that exist in Store
+
+                    if (updatedData.length > 0) {
+                        setProductsData(updatedData);
+                        setFetchError(null);
+                    } else {
+                        // This case happens if store returns products but none match our coinsSet SKUs
+                        setFetchError('Products available in Store do not match App configuration.');
+                    }
+                } else {
+                    console.log('IAP Debug: No products details fetched from Store.');
+                    console.log('IAP Debug: No products details fetched from Store.');
+                    setFetchError(`DEBUG MODE: Google returned 0 products.\n\nPossible Causes:\n1. App signature mismtach\n2. User not a tester\n3. Play Store cache needs clearing\n\nRequested SKUs:\n${(coinsSet.map(c => c.sku)).join(', ')}`);
                 }
             } catch (error: any) {
                 console.error('IAP Init Error:', error);
-                Alert.alert('IAP Init Error', error.message || 'Unknown error');
+                setFetchError(`Failed: ${error.message || JSON.stringify(error)}`);
             } finally {
                 setLoading(false);
             }
         };
 
-        initIAP();
+        const setupListener = () => {
+            if (userId) {
+                IAPService.startPurchaseListener(userId, (sku) => {
+                    console.log('Purchase successful for SKU:', sku);
+                    Alert.alert('Success', 'Coins added to your wallet!');
+                });
+            }
+        };
 
-        if (userId) {
-            IAPService.startPurchaseListener(userId, (sku) => {
-                console.log('Purchase successful for SKU:', sku);
-                Alert.alert('Success', 'Coins added to your wallet!');
-            });
-        }
+        initIAP();
+        setupListener();
 
         return () => {
+            // Cleanup if needed
             IAPService.endPurchaseListener();
             IAPService.endConnection();
         };
@@ -84,7 +121,7 @@ const ByCoinsScreen = () => {
             }
         } catch (error: any) {
             console.log('Purchase Request Error:', error);
-            Alert.alert('Purchase Failed', error.message || 'Unknown error occurred');
+            // Alert.alert('Purchase Failed', error.message || 'Unknown error occurred');
         } finally {
             setLoading(false);
         }
@@ -99,49 +136,55 @@ const ByCoinsScreen = () => {
                     />
 
                     <View style={styles.contentContainer}>
-                        <FlatList
-                            style={styles.flatList}
-                            data={coinsSet}
-                            keyExtractor={item => `${item.coin}`}
-                            horizontal={false}
-                            numColumns={3}
-                            showsVerticalScrollIndicator={false}
-                            renderItem={({ item }) => (
+                        {fetchError ? (
+                            <View style={styles.errorContainer}>
+                                <Text style={styles.errorText}>{fetchError}</Text>
+                            </View>
+                        ) : (
+                            <FlatList
+                                style={styles.flatList}
+                                data={productsData}
+                                keyExtractor={item => `${item.coin}`}
+                                horizontal={false}
+                                numColumns={3}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item }) => (
 
-                                <TouchableOpacity
-                                    activeOpacity={0.9}
-                                    onPress={() => handleBuyCoin(item)}
-                                >
+                                    <TouchableOpacity
+                                        activeOpacity={0.9}
+                                        onPress={() => handleBuyCoin(item)}
+                                    >
 
-                                    <LinearGradient
-                                        style={styles.gradientItem}
-                                        locations={[0, 1]}
-                                        colors={[COLORS.lightRed, COLORS.lightBlue]}
-                                        useAngle={true}
-                                        angle={90}>
+                                        <LinearGradient
+                                            style={styles.gradientItem}
+                                            locations={[0, 1]}
+                                            colors={[COLORS.lightRed, COLORS.lightBlue]}
+                                            useAngle={true}
+                                            angle={90}>
 
-                                        <View style={styles.itemContent}>
+                                            <View style={styles.itemContent}>
 
-                                            <Image
-                                                style={styles.coinImage}
-                                                source={icons.coins_1}
-                                            />
+                                                <Image
+                                                    style={styles.coinImage}
+                                                    source={icons.coins_1}
+                                                />
 
-                                            <View style={styles.textContainer}>
-                                                <Text style={styles.priceText}>
-                                                    {` $${item.price}`}
-                                                </Text>
-                                                <Text style={styles.coinsText}>
-                                                    {`${item.coin} Coins`}
-                                                </Text>
+                                                <View style={styles.textContainer}>
+                                                    <Text style={styles.priceText}>
+                                                        {typeof item.price === 'number' ? `$${item.price}` : item.price}
+                                                    </Text>
+                                                    <Text style={styles.coinsText}>
+                                                        {`${item.coin} Coins`}
+                                                    </Text>
+                                                </View>
                                             </View>
-                                        </View>
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            )}
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                )}
 
-                            ListFooterComponent={<View style={styles.footer} />}
-                        />
+                                ListFooterComponent={<View style={styles.footer} />}
+                            />
+                        )}
                     </View>
                 </View>
             </Wrapper>
@@ -201,6 +244,18 @@ const styles = StyleSheet.create({
     },
     footer: {
         marginBottom: 70,
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    errorText: {
+        fontSize: SIZES.responsiveScreenFontSize(2),
+        color: COLORS.black,
+        textAlign: 'center',
+        fontWeight: 'bold',
     },
 });
 

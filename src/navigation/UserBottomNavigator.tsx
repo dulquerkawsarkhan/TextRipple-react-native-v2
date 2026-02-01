@@ -58,7 +58,7 @@ export default function AnimTab1() {
           </View>
         ),
         tabBarStyle: {
-          height: SIZES.responsiveScreenWidth(12),
+          height: SIZES.responsiveScreenWidth(15),
           position: 'absolute',
           bottom: 20,
 

@@ -12,6 +12,7 @@ const itemSkus = Platform.select({
         'coins_185',
         'coins_200',
         'coins_320',
+        'coins_330', // Added as fallback
         'coins_340',
         'coins_430',
         'coins_450',
@@ -27,6 +28,7 @@ const itemSkus = Platform.select({
         'coins_185',
         'coins_200',
         'coins_320',
+        'coins_330', // Added as fallback
         'coins_340',
         'coins_430',
         'coins_450',
@@ -48,12 +50,23 @@ class IAPServiceClass {
     products: RNIap.Product[] = [];
     purchaseUpdateSubscription: any = null;
     purchaseErrorSubscription: any = null;
+    connectionInitialized: boolean = false;
 
     async init() {
         try {
+            if (this.connectionInitialized) {
+                console.log('IAP: Connection already initialized');
+                return;
+            }
+
             console.log('IAP: Initializing connection...');
             const result = await RNIap.initConnection();
+            this.connectionInitialized = result;
             console.log('IAP: Connection initialized', result);
+
+            if (Platform.OS === 'android') {
+                 // Android specific init if needed future
+            }
 
             if (itemSkus && itemSkus.length > 0) {
                 console.log('IAP: Fetching products for SKUs:', itemSkus);
@@ -65,16 +78,20 @@ class IAPServiceClass {
             }
         } catch (err) {
             console.warn('IAP Init Error:', err);
+             // Propagate error or handle it, but allow app to continue
         }
     }
 
     async getProducts(): Promise<RNIap.Product[]> {
-        if (this.products.length === 0 && itemSkus) {
+        if (itemSkus) {
              try {
-                console.log('IAP: Retrying fetch products...');
-                // @ts-ignore
-                this.products = await RNIap.getProducts({ skus: itemSkus });
-                console.log('IAP: Products fetched (retry):', this.products.length);
+                // Always try to fetch if empty, or refresh
+                if (this.products.length === 0) {
+                     console.log('IAP: Retrying fetch products...');
+                    // @ts-ignore
+                    this.products = await RNIap.getProducts({ skus: itemSkus });
+                    console.log('IAP: Products fetched (retry):', this.products.length);
+                }
             } catch (err) {
                 console.warn('IAP Get Products Error:', err);
                 return [];
@@ -88,14 +105,32 @@ class IAPServiceClass {
 
     async requestPurchase(sku: string) {
         try {
+            if (!this.connectionInitialized) {
+                 await this.init();
+            }
             console.log('IAP: Requesting purchase for SKU:', sku);
+            
+            // Check if product exists in fetched products
+            const productExists = this.products.some(p => (p as any).productId === sku);
+
+            if (!productExists) {
+                console.warn('IAP: Product not found in fetched products. Skipping store request.');
+                if (__DEV__) {
+                     throw new Error('sku was not found (simulated for Dev)');
+                }
+            }
+
             // Unified API for v12+
             // @ts-ignore
             await RNIap.requestPurchase({ sku });
         } catch (err: any) {
-            if (__DEV__ && (err.message.includes('sku was not found') || err.message.includes('Billing is unavailable'))) {
+            // Enhanced error handling for Dev Mode simulation
+            const isDevModeError = __DEV__ || (err.message && (err.message.includes('sku was not found') || err.message.includes('Billing is unavailable') || err.message.includes('Missing purchase request configuration')));
+            
+            if (isDevModeError) {
                 console.log('DEV MODE: Simulating purchase for', sku);
-                const coins = parseInt(sku.split('_')[1], 10);
+                const coins = parseInt(sku.replace('coins_', '').replace('_v2', ''), 10);
+                
                 if (this.userId && !isNaN(coins)) {
                     await AuthService.addCoins(this.userId, coins);
                     await AuthService.recordPurchase(this.userId, {
@@ -119,6 +154,10 @@ class IAPServiceClass {
         this.userId = userId;
         this.onPurchaseSuccess = onPurchaseSuccess;
 
+        if (this.purchaseUpdateSubscription) {
+             this.purchaseUpdateSubscription.remove();
+        }
+
         this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase: RNIap.Purchase) => {
 
 
@@ -127,7 +166,7 @@ class IAPServiceClass {
                 await RNIap.finishTransaction({ purchase, isConsumable: true });
 
                 // Parse coins from SKU
-                const coins = parseInt(purchase.productId.split('_')[1], 10);
+                 let coins = parseInt(purchase.productId.replace('coins_', '').replace('_v2', ''), 10);
 
 
                 if (!isNaN(coins)) {
@@ -143,7 +182,7 @@ class IAPServiceClass {
                         }
 
                 } else {
-                    console.warn('IAP: Could not parse coins from SKU');
+                    console.warn('IAP: Could not parse coins from SKU', purchase.productId);
                 }
 
             } catch (ackErr) {
@@ -151,8 +190,13 @@ class IAPServiceClass {
             }
         });
 
+        if (this.purchaseErrorSubscription) {
+             this.purchaseErrorSubscription.remove();
+        }
+
         this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error: RNIap.PurchaseError) => {
-            console.warn('IAP Purchase Error:', error);
+            console.warn('IAP Purchase Error Listener:', error);
+            // Don't alert here, just log. UI handling should be in request path if possible.
         });
     }
 
@@ -169,7 +213,10 @@ class IAPServiceClass {
 
     async endConnection() {
         try {
-             await RNIap.endConnection();
+             if (this.connectionInitialized) {
+                 await RNIap.endConnection();
+                 this.connectionInitialized = false;
+             }
         } catch(err) {
              console.warn('IAP End Connection Error', err);
         }
