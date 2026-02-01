@@ -135,9 +135,38 @@ class IAPServiceClass {
                 }
             }
 
-            // Unified API for v12+
-            // @ts-ignore
-            await requestPurchase({ sku });
+            // Unified API for v14+
+            const product = this.products.find(p => p.id === sku);
+            
+            if (Platform.OS === 'android') {
+                const androidProduct = product as any; // Cast to access Android-specific properties safely
+                const offerToken = androidProduct?.oneTimePurchaseOfferDetailsAndroid?.[0]?.offerToken;
+                
+                if (!offerToken) {
+                     console.warn('IAP: No offerToken found for product', sku);
+                     // Still try to request without it, or fail? Most likely standard products need it now.
+                }
+
+                await requestPurchase({
+                    type: 'in-app',
+                    request: {
+                        android: {
+                            skus: [sku],
+                            offerToken: offerToken // Optional but often required for Billing v5+
+                        }
+                    }
+                });
+            } else {
+                 // iOS
+                 await requestPurchase({
+                    type: 'in-app',
+                    request: {
+                        ios: {
+                            sku: sku
+                        }
+                    }
+                });
+            }
         } catch (err: any) {
             // Enhanced error handling for Dev Mode simulation
             const isDevModeError = __DEV__ || (err.message && (err.message.includes('sku was not found') || err.message.includes('Billing is unavailable') || err.message.includes('Missing purchase request configuration')));
